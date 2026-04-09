@@ -1,0 +1,336 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  gap: 12px;
+}
+
+.topbar {
+  background: rgba(255, 248, 238, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar h1 {
+  font-family: var(--font-title);
+  margin: 0;
+  font-size: 30px;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  color: #5b4d40;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolbar button,
+.toolbar input,
+.toolbar select,
+.preferences select,
+.preferences input,
+.preferences button {
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid #b9ac96;
+  background: #fffdf8;
+  padding: 0 12px;
+}
+
+.toolbar button,
+.list-item {
+  cursor: pointer;
+}
+
+.hidden-import {
+  display: none;
+}
+
+.preferences {
+  background: rgba(250, 240, 225, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.preferences label {
+  display: grid;
+  gap: 6px;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+}
+
+.note-list {
+  background: rgba(252, 244, 232, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: var(--shadow);
+  overflow: auto;
+}
+
+.note-list h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-family: var(--font-title);
+}
+
+.note-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.list-item {
+  width: 100%;
+  border: 1px solid #ccbda6;
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.list-item.active {
+  border-color: #8f7456;
+  background: #f4e9d5;
+}
+
+.list-item span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-item small {
+  color: #7b6a58;
+}
+
+.empty {
+  color: #7a6450;
+}
+
+.board {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #8e7558;
+  border-radius: 18px;
+  background-size: 36px 36px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45), var(--shadow);
+}
+
+.theme-desk .board {
+  background-image:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(120deg, #7d5f42 0%, #6a4f35 50%, #5a412c 100%);
+}
+
+.theme-paper .board {
+  background-image:
+    linear-gradient(90deg, rgba(116, 92, 69, 0.15) 1px, transparent 1px),
+    linear-gradient(rgba(116, 92, 69, 0.15) 1px, transparent 1px),
+    linear-gradient(120deg, #f8f0e1 0%, #e8d7bf 100%);
+}
+
+.note {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  border: 1px solid rgba(34, 26, 20, 0.22);
+  box-shadow: 0 10px 22px rgba(24, 14, 8, 0.34);
+  overflow: hidden;
+}
+
+.note.active {
+  outline: 2px solid #24404b;
+}
+
+.note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px dashed rgba(40, 30, 20, 0.2);
+  cursor: grab;
+}
+
+.note-header input {
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  width: 100%;
+  min-width: 0;
+}
+
+.note-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.note-actions button {
+  border: 1px solid rgba(30, 22, 18, 0.3);
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.note textarea {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  border: none;
+  background: transparent;
+  padding: 10px;
+  line-height: 1.45;
+}
+
+.format-toolbar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 8px 0;
+}
+
+.format-toolbar button {
+  border: 1px solid rgba(30, 22, 18, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.45);
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.note-footer {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border-top: 1px dashed rgba(40, 30, 20, 0.2);
+}
+
+.note-footer label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.swatches {
+  display: flex;
+  gap: 4px;
+}
+
+.swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(30, 20, 12, 0.25);
+}
+
+.swatch.selected {
+  outline: 2px solid #1e3a43;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 3px;
+  bottom: 0;
+  border: none;
+  background: transparent;
+  cursor: nwse-resize;
+  color: rgba(30, 20, 14, 0.7);
+}
+
+.note-yellow {
+  background: #fff3a8;
+}
+
+.note-blue {
+  background: #bde5ff;
+}
+
+.note-green {
+  background: #cbf3c2;
+}
+
+.note-pink {
+  background: #ffd3df;
+}
+
+.note-purple {
+  background: #e5d6ff;
+}
+
+.swatch.yellow {
+  background: #fff3a8;
+}
+
+.swatch.blue {
+  background: #bde5ff;
+}
+
+.swatch.green {
+  background: #cbf3c2;
+}
+
+.swatch.pink {
+  background: #ffd3df;
+}
+
+.swatch.purple {
+  background: #e5d6ff;
+}
+
+.status-bar {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(251, 245, 236, 0.95);
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+@media (max-width: 1080px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: 200px 1fr;
+  }
+
+  .status-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

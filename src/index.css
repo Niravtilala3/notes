@@ -1,0 +1,34 @@
+:root {
+  --text: #2b211b;
+  --surface: #fff8ee;
+  --line: #d6cab4;
+  --panel: #f3e7d3;
+  --accent: #264653;
+  --shadow: 0 18px 28px rgba(66, 51, 40, 0.18);
+  --font-body: 'Avenir Next', 'Segoe UI', 'Trebuchet MS', sans-serif;
+  --font-title: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: radial-gradient(circle at 30% 10%, #fce9c8 0%, #f2dcc2 35%, #d9b78e 100%);
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
