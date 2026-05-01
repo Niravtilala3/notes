@@ -1,4 +1,11 @@
-import { createDefaultPreferences, createNote, type Note, type Preferences } from './notes'
+import {
+  createDefaultPreferences,
+  normalizeImportedNotes,
+  normalizePreferences,
+  createNote,
+  type Note,
+  type Preferences,
+} from './notes'
 
 export type BoardState = {
   notes: Note[]
@@ -85,12 +92,26 @@ export function tryDeserializeState(raw: string | null): PersistedBoardState | n
   }
 
   try {
-    const parsed = JSON.parse(raw) as PersistedBoardState
+    const parsed = JSON.parse(raw) as Partial<PersistedBoardState>
     if (parsed.version !== 1 || !Array.isArray(parsed.notes) || !parsed.preferences) {
       return null
     }
 
-    return parsed
+    const notes = normalizeImportedNotes(
+      {
+        notes: parsed.notes,
+      },
+      new Set<string>(),
+      1
+    )
+
+    const preferences = normalizePreferences(parsed.preferences)
+
+    return {
+      version: 1,
+      notes,
+      preferences,
+    }
   } catch {
     return null
   }

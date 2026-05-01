@@ -22,6 +22,7 @@ type DragState = {
   noteId: string
   pointerId: number
   mode: DragMode
+  captureTarget: HTMLElement | null
   startX: number
   startY: number
   originX: number
@@ -93,16 +94,26 @@ function isTextInputTarget(target: EventTarget | null): boolean {
   )
 }
 
+function detectCompactViewport(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false
+  }
+
+  return window.matchMedia('(max-width: 860px)').matches
+}
+
 function App() {
   const [boardState, setBoardState] = useState<BoardState>(createStarterState)
   const [showPreferences, setShowPreferences] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [importMode, setImportMode] = useState<'merge' | 'replace'>('merge')
+  const [isCompactViewport, setIsCompactViewport] = useState<boolean>(detectCompactViewport)
   const boardRef = useRef<HTMLDivElement | null>(null)
   const searchRef = useRef<HTMLInputElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const noteTextRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
   const dragRef = useRef<DragState | null>(null)
+  const saveTimerRef = useRef<number | null>(null)
 
   const activeNote = boardState.notes.find((note) => note.id === boardState.activeNoteId) ?? null
 
@@ -113,9 +124,48 @@ function App() {
   )
 
   useEffect(() => {
-    const payload = serializeState(boardState)
-    getStorage()?.setItem(STORAGE_KEY, JSON.stringify(payload))
+    if (saveTimerRef.current !== null) {
+      window.clearTimeout(saveTimerRef.current)
+    }
+
+    saveTimerRef.current = window.setTimeout(() => {
+      const payload = serializeState(boardState)
+      getStorage()?.setItem(STORAGE_KEY, JSON.stringify(payload))
+    }, 220)
+
+    return () => {
+      if (saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current)
+      }
+    }
   }, [boardState])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 860px)')
+    const update = (event?: MediaQueryListEvent): void => {
+      setIsCompactViewport(event ? event.matches : mediaQuery.matches)
+    }
+
+    update()
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', update)
+      return () => {
+        mediaQuery.removeEventListener('change', update)
+      }
+    }
+
+    if (typeof mediaQuery.addListener === 'function') {
+      mediaQuery.addListener(update)
+      return () => {
+        mediaQuery.removeListener(update)
+      }
+    }
+  }, [])
 
   const updateNote = useCallback((noteId: string, updater: (note: Note) => Note): void => {
     setBoardState((current) => ({
@@ -216,11 +266,21 @@ function App() {
       return
     }
 
+    const captureTarget = event.currentTarget
+    if (typeof captureTarget.setPointerCapture === 'function') {
+      try {
+        captureTarget.setPointerCapture(event.pointerId)
+      } catch {
+        // Ignore pointer capture failures on unsupported elements.
+      }
+    }
+
     focusNote(note.id)
     dragRef.current = {
       noteId: note.id,
       pointerId: event.pointerId,
       mode,
+      captureTarget,
       startX: event.clientX,
       startY: event.clientY,
       originX: note.position.x,
@@ -231,6 +291,23 @@ function App() {
   }
 
   useEffect(() => {
+    const clearDrag = (): void => {
+      const activeDrag = dragRef.current
+      if (!activeDrag) {
+        return
+      }
+
+      if (activeDrag.captureTarget && typeof activeDrag.captureTarget.releasePointerCapture === 'function') {
+        try {
+          activeDrag.captureTarget.releasePointerCapture(activeDrag.pointerId)
+        } catch {
+          // Ignore release failures when pointer is already released.
+        }
+      }
+
+      dragRef.current = null
+    }
+
     const handlePointerMove = (event: globalThis.PointerEvent): void => {
       const dragState = dragRef.current
       const boardRect = boardRef.current?.getBoundingClientRect()
@@ -306,16 +383,28 @@ function App() {
 
     const handlePointerUp = (event: globalThis.PointerEvent): void => {
       if (dragRef.current?.pointerId === event.pointerId) {
-        dragRef.current = null
+        clearDrag()
       }
+    }
+
+    const handlePointerCancel = (): void => {
+      clearDrag()
+    }
+
+    const handleWindowBlur = (): void => {
+      clearDrag()
     }
 
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerCancel)
+    window.addEventListener('blur', handleWindowBlur)
 
     return () => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerCancel)
+      window.removeEventListener('blur', handleWindowBlur)
     }
   }, [])
 
@@ -356,12 +445,102 @@ function App() {
       if ((event.key === 'Delete' || event.key === 'Backspace') && !isTextInputTarget(event.target)) {
         event.preventDefault()
         removeNote(boardState.activeNoteId)
+        return
+      }
+
+      const active = boardState.notes.find((note) => note.id === boardState.activeNoteId)
+      if (!active || isTextInputTarget(event.target)) {
+        return
+      }
+
+      const moveStep = event.shiftKey ? 24 : 8
+      const resizeStep = event.shiftKey ? 24 : 12
+
+      if (event.altKey) {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowLeft' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+          event.preventDefault()
+          updateNote(active.id, (currentNote) => {
+            const width =
+              event.key === 'ArrowRight'
+                ? currentNote.size.width + resizeStep
+                : event.key === 'ArrowLeft'
+                  ? currentNote.size.width - resizeStep
+                  : currentNote.size.width
+            const height =
+              event.key === 'ArrowDown'
+                ? currentNote.size.height + resizeStep
+                : event.key === 'ArrowUp'
+                  ? currentNote.size.height - resizeStep
+                  : currentNote.size.height
+
+            const clampedSize = {
+              width: Math.min(560, Math.max(220, width)),
+              height: Math.min(520, Math.max(140, height)),
+            }
+
+            return {
+              ...currentNote,
+              size: clampedSize,
+            }
+          })
+        }
+        return
+      }
+
+      if (event.key === 'ArrowRight' || event.key === 'ArrowLeft' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        event.preventDefault()
+        updateNote(active.id, (currentNote) => {
+          const x =
+            event.key === 'ArrowRight'
+              ? currentNote.position.x + moveStep
+              : event.key === 'ArrowLeft'
+                ? currentNote.position.x - moveStep
+                : currentNote.position.x
+          const y =
+            event.key === 'ArrowDown'
+              ? currentNote.position.y + moveStep
+              : event.key === 'ArrowUp'
+                ? currentNote.position.y - moveStep
+                : currentNote.position.y
+
+          const boardRect = boardRef.current?.getBoundingClientRect()
+          if (!boardRect) {
+            return {
+              ...currentNote,
+              position: {
+                x: Math.max(0, x),
+                y: Math.max(0, y),
+              },
+            }
+          }
+
+          const clamped = clampWithinBoard(
+            {
+              x,
+              y,
+              width: currentNote.size.width,
+              height: currentNote.size.height,
+            },
+            {
+              width: boardRect.width,
+              height: boardRect.height,
+            }
+          )
+
+          return {
+            ...currentNote,
+            position: {
+              x: clamped.x,
+              y: clamped.y,
+            },
+          }
+        })
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [addNote, boardState.activeNoteId, duplicateActiveNote, removeNote])
+  }, [addNote, boardState.activeNoteId, boardState.notes, duplicateActiveNote, removeNote, updateNote])
 
   const exportNotes = (): void => {
     const bundle = createExportBundle({
@@ -445,7 +624,7 @@ function App() {
   }
 
   return (
-    <div className={`app theme-${boardState.preferences.boardTheme}`}>
+    <div className={`app theme-${boardState.preferences.boardTheme} ${isCompactViewport ? 'mobile-layout' : ''}`}>
       <header className="topbar">
         <div>
           <h1>Stickies Board</h1>
@@ -459,21 +638,38 @@ function App() {
           <button type="button" onClick={duplicateActiveNote} disabled={!activeNote}>
             Duplicate
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (activeNote) {
-                removeNote(activeNote.id)
-              }
-            }}
-            disabled={!activeNote}
-          >
-            Delete
-          </button>
+          {!isCompactViewport ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (activeNote) {
+                  removeNote(activeNote.id)
+                }
+              }}
+              disabled={!activeNote}
+            >
+              Delete
+            </button>
+          ) : null}
           <button type="button" onClick={exportNotes}>
             Export
           </button>
-          <button type="button" onClick={() => fileInputRef.current?.click()}>
+          <button
+            type="button"
+            onClick={() => {
+              if (importMode === 'replace') {
+                const approved = window.confirm(
+                  `Replace board with imported notes? This removes ${boardState.notes.length} existing notes.`
+                )
+
+                if (!approved) {
+                  return
+                }
+              }
+
+              fileInputRef.current?.click()
+            }}
+          >
             Import
           </button>
           <button type="button" onClick={() => setShowPreferences((open) => !open)}>
@@ -790,8 +986,29 @@ function App() {
 
       <footer className="status-bar">
         <span role="status">{statusMessage || 'Ready'}</span>
-        <span>Shortcuts: Cmd/Ctrl+N new, Cmd/Ctrl+D duplicate, Cmd/Ctrl+F search, Delete remove</span>
+        <span>
+          Shortcuts: Cmd/Ctrl+N new, Cmd/Ctrl+D duplicate, Cmd/Ctrl+F search, Delete remove, Arrows move,
+          Alt+Arrows resize
+        </span>
       </footer>
+
+      {isCompactViewport ? (
+        <nav className="mobile-dock" aria-label="Mobile quick actions">
+          <button type="button" aria-label="Quick New Note" onClick={addNote}>
+            + Note
+          </button>
+          <button type="button" aria-label="Quick Search" onClick={() => searchRef.current?.focus()}>
+            Search
+          </button>
+          <button
+            type="button"
+            aria-label="Quick Preferences"
+            onClick={() => setShowPreferences((open) => !open)}
+          >
+            Prefs
+          </button>
+        </nav>
+      ) : null}
     </div>
   )
 }

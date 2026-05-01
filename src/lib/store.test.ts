@@ -5,6 +5,7 @@ import {
   createNoteFromPreferences,
   duplicateNote,
   getNextZIndex,
+  tryDeserializeState,
   upsertNote,
 } from './store'
 
@@ -43,5 +44,36 @@ describe('store helpers', () => {
 
     expect(updated).toHaveLength(1)
     expect(updated[0].title).toBe('Renamed')
+  })
+
+  it('sanitizes persisted state to prevent malformed note crashes', () => {
+    const parsed = tryDeserializeState(
+      JSON.stringify({
+        version: 1,
+        notes: [
+          {
+            id: 'bad-note',
+            title: 123,
+            position: {},
+            size: {
+              width: 'wide',
+            },
+          },
+        ],
+        preferences: {
+          defaultColor: 'ultra-violet',
+          defaultFontSize: 200,
+          boardTheme: 'storm',
+        },
+      })
+    )
+
+    expect(parsed).not.toBeNull()
+    expect(parsed?.notes).toHaveLength(1)
+    expect(parsed?.notes[0].title).toBe('Imported Note')
+    expect(parsed?.notes[0].position.x).toBe(36)
+    expect(parsed?.preferences.defaultColor).toBe('yellow')
+    expect(parsed?.preferences.defaultFontSize).toBe(16)
+    expect(parsed?.preferences.boardTheme).toBe('desk')
   })
 })

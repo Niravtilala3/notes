@@ -40,6 +40,24 @@ describe('parseImportBundle', () => {
   it('throws when payload is invalid json', () => {
     expect(() => parseImportBundle('{bad json')).toThrow('Invalid import file')
   })
+
+  it('normalizes invalid preferences to safe defaults', () => {
+    const parsed = parseImportBundle(
+      JSON.stringify({
+        version: 1,
+        notes: [sampleNote],
+        preferences: {
+          defaultColor: 'unknown',
+          defaultFontSize: 99,
+          boardTheme: 'neon-grid',
+        },
+      })
+    )
+
+    expect(parsed.preferences.defaultColor).toBe('yellow')
+    expect(parsed.preferences.defaultFontSize).toBe(16)
+    expect(parsed.preferences.boardTheme).toBe('desk')
+  })
 })
 
 describe('mergeImportedNotes', () => {

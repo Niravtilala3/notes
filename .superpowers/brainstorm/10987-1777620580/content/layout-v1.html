@@ -1,0 +1,38 @@
+<h2>Overall Layout & Navigation</h2>
+<p class="subtitle">How should users navigate between boards, tags, and tools?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Sidebar + Canvas (Classic)</h3>
+      <p>Persistent left sidebar for boards, tags, and settings. Infinite canvas on the right.</p>
+      <div style="display:flex; height:100px; margin-top:10px; border:1px solid var(--border); border-radius:4px; overflow:hidden;">
+        <div style="width:30%; background:var(--bg-card); border-right:1px solid var(--border);"></div>
+        <div style="width:70%; background:var(--bg-subtle);"></div>
+      </div>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Floating UI (Immersive)</h3>
+      <p>Canvas takes up the whole screen. Tools are in a floating dock or accessible via Command Palette.</p>
+      <div style="display:flex; height:100px; margin-top:10px; border:1px solid var(--border); border-radius:4px; overflow:hidden; position:relative;">
+        <div style="width:100%; background:var(--bg-subtle);"></div>
+        <div style="position:absolute; bottom:10px; left:50%; transform:translateX(-50%); width:60%; height:15px; background:var(--bg-card); border:1px solid var(--border); border-radius:10px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Top Bar + Canvas (Simple)</h3>
+      <p>Standard top navigation bar for switching boards, leaving maximum vertical space for the canvas.</p>
+      <div style="display:flex; flex-direction:column; height:100px; margin-top:10px; border:1px solid var(--border); border-radius:4px; overflow:hidden;">
+        <div style="height:20%; background:var(--bg-card); border-bottom:1px solid var(--border);"></div>
+        <div style="height:80%; background:var(--bg-subtle);"></div>
+      </div>
+    </div>
+  </div>
+</div>

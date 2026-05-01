@@ -38,6 +38,22 @@ export function createDefaultPreferences(): Preferences {
   }
 }
 
+export function normalizePreferences(input: unknown, fallback = createDefaultPreferences()): Preferences {
+  const source = asObject(input)
+
+  const defaultColor = toColor(source.defaultColor, fallback.defaultColor)
+  const candidateFontSize = asNumber(source.defaultFontSize, fallback.defaultFontSize)
+  const defaultFontSize =
+    candidateFontSize >= 12 && candidateFontSize <= 28 ? candidateFontSize : fallback.defaultFontSize
+  const boardTheme = source.boardTheme === 'paper' || source.boardTheme === 'desk' ? source.boardTheme : fallback.boardTheme
+
+  return {
+    defaultColor,
+    defaultFontSize,
+    boardTheme,
+  }
+}
+
 function asObject(value: unknown): UnknownObject {
   if (typeof value === 'object' && value !== null) {
     return value as UnknownObject

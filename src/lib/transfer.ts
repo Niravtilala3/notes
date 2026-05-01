@@ -1,4 +1,4 @@
-import { normalizeImportedNotes, type Note, type Preferences } from './notes'
+import { normalizeImportedNotes, normalizePreferences, type Note, type Preferences } from './notes'
 
 export type ExportBundle = {
   version: 1
@@ -38,7 +38,7 @@ export function parseImportBundle(raw: string): ExportBundle {
     version: 1,
     exportedAt: typeof bundle.exportedAt === 'string' ? bundle.exportedAt : new Date().toISOString(),
     notes: bundle.notes,
-    preferences: bundle.preferences,
+    preferences: normalizePreferences(bundle.preferences),
   }
 }
 
